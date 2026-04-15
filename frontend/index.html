@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚨 AI Hate Speech Detector</title>
+  <title>🚨  Hate Speech Detector</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -246,6 +246,7 @@
     }
     
     body.dark-theme .clear-btn {
+      
       background: rgba(255,255,255,0.1);
     }
     
@@ -286,7 +287,8 @@
       
       <div style="height: 25px;"></div>
       
-      <button onclick="check()">🔍 Analyze Speech</button>
+      <button onclick="check()">🔍 Analyze Speech</button> 
+      
       <button class="clear-btn" onclick="clearAll()">Clear History</button>
       
       <div class="loader" id="loader">
@@ -392,7 +394,7 @@
       resultBox.innerHTML = '';
       
       try {
-        const res = await fetch('http://localhost:3000/check', {
+        const res = await fetch('http://127.0.0.1:5000/predict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
@@ -401,9 +403,23 @@
         const data = await res.json();
         loader.style.display = 'none';
         
-        totalScans++; safeCount += data.result === 'Not Toxic' ? 1 : 0; toxicCount++;
+        let result = data.result;
+        if (!result) {
+          if (data.error) {
+            resultBox.innerHTML = `❌ Error: ${data.error}`;
+            resultBox.className = 'result toxic show';
+            return;
+          }
+          resultBox.innerHTML = '❌ Unknown error - check console';
+          resultBox.className = 'result toxic show';
+          return;
+        }
+        
+        totalScans++; 
+        safeCount += result === 'Not Toxic' ? 1 : 0; 
+        toxicCount += result === 'Toxic' ? 1 : 0;
         updateStats();
-        showResult(data.result, text);
+        showResult(result, text);
         addToHistory(text, data.result);
         
         if (data.result === 'Not Toxic') {
@@ -440,6 +456,7 @@
     }
     
     function updateStats() {
+      document.getElementById('total').textContent = totalScans;
       document.getElementById('total').textContent = totalScans;
       document.getElementById('safe').textContent = safeCount;
       document.getElementById('toxic').textContent = toxicCount;

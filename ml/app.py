@@ -1,15 +1,17 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS   # ✅ ADD THIS
 import pickle
 
 app = Flask(__name__)
+CORS(app)   # ✅ ADD THIS (important)
 
 model = pickle.load(open("model.pkl", "rb"))
 vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.json["text"]
-    vec = vectorizer.transform([data])
+    text = request.json["text"]
+    vec = vectorizer.transform([text])
     result = model.predict(vec)[0]
 
     return jsonify({
@@ -17,4 +19,4 @@ def predict():
     })
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(debug=True)
